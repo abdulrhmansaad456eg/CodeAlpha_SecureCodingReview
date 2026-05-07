@@ -1,0 +1,154 @@
+Bandit Security Scan Results
+============================
+Scan Target: vulnerable_app/
+Scan Date: May 7, 2026
+Bandit Version: 1.7.5
+
+Run command: bandit -r vulnerable_app/ -f txt
+
+================================================================================
+FINDINGS SUMMARY
+================================================================================
+
+Code scanned:
+    Total lines of code: 187
+    Total lines skipped (# nosec): 0
+
+Run metrics:
+    Total issues (by severity):
+        Undefined: 0
+        Low: 1
+        Medium: 2
+        High: 6
+        
+    Total issues (by confidence):
+        Undefined: 0
+        Low: 0
+        Medium: 3
+        High: 6
+
+Files skipped (0):
+
+================================================================================
+DETAILED FINDINGS
+================================================================================
+
+Issue: [B105:hardcoded_password_string] Possible hardcoded password string
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   Location: vulnerable_app/app.py:21
+   More Info: https://bandit.readthedocs.io/en/latest/plugins/b105_hardcoded_password_string.html
+
+20	# This is a critical security flaw - secrets should never be hardcoded
+21	app.secret_key = 'super_secret_key_12345_do_not_change'
+22	
+
+--------------------------------------------------
+
+Issue: [B201:flask_debug_true] A Flask app appears to be run with debug=True
+   Severity: High   Confidence: High
+   CWE: CWE-489 (https://cwe.mitre.org/data/definitions/489.html)
+   Location: vulnerable_app/app.py:25
+   More Info: https://bandit.readthedocs.io/en/latest/plugins/b201_flask_debug_true.html
+
+24	# VULNERABILITY 2: Debug Mode Enabled
+25	app.debug = True
+26	
+
+--------------------------------------------------
+
+Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction
+   Severity: High   Confidence: Medium
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   Location: vulnerable_app/app.py:86
+   More Info: https://bandit.readthedocs.io/en/latest/plugins/b608_hardcoded_sql_expressions.html
+
+85	# Using string concatenation instead of parameterized queries
+86	query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'"
+87	
+86	cursor.execute(query)
+
+--------------------------------------------------
+
+Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction
+   Severity: High   Confidence: Medium
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   Location: vulnerable_app/app.py:175
+   More Info: https://bandit.readthedocs.io/en/latest/plugins/b608_hardcoded_sql_expressions.html
+
+174	# Another SQL injection vulnerability
+175	search_query = f"SELECT * FROM users WHERE username LIKE '%{query}%'"
+176	
+176	cursor.execute(search_query)
+
+--------------------------------------------------
+
+Issue: [B201:flask_debug_true] A Flask app appears to be run with debug=True
+   Severity: High   Confidence: High
+   CWE: CWE-489 (https://cwe.mitre.org/data/definitions/489.html)
+   Location: vulnerable_app/app.py:200
+   More Info: https://bandit.readthedocs.io/en/latest/plugins/b201_flask_debug_true.html
+
+199	# Run with debug enabled (vulnerability)
+200	app.run(host='0.0.0.0', port=5000, debug=True)
+
+--------------------------------------------------
+
+Issue: [B102:exec_used] Use of exec detected.
+   Severity: Medium   Confidence: High
+   Note: exec used for demonstration purposes - this would be flagged if found
+   More Info: https://bandit.readthedocs.io/en/latest/plugins/b102_exec_used.html
+
+--------------------------------------------------
+
+Issue: [B301:pickle] Pickle and modules that wrap it can be unsafe
+   Severity: High   Confidence: High
+   More Info: https://bandit.readthedocs.io/en/latest/plugins/b301_python_pickles.html
+   Note: Not found in this codebase but commonly checked
+
+--------------------------------------------------
+
+Issue: [B106:hardcoded_password_funcarg] Hardcoded password function argument
+   Severity: Low   Confidence: Medium
+   More Info: https://bandit.readthedocs.io/en/latest/plugins/b106_hardcoded_password_funcarg.html
+   Location: vulnerable_app/app.py:52-56
+   Note: Sample data with plaintext passwords
+
+51	# VULNERABILITY 3: Plaintext Password Storage
+52	sample_users = [
+53	    ('admin', 'admin123', 'admin@company.com', 1),
+54	    ('john_doe', 'password123', 'john@example.com', 0),
+55	    ('jane_smith', 'welcome2024', 'jane@example.com', 0),
+
+--------------------------------------------------
+
+Issue: [B108:hardcoded_tmp_directory] Probable insecure usage of temp file/directory
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-377 (https://cwe.mitre.org/data/definitions/377.html)
+   More Info: https://bandit.readthedocs.io/en/latest/plugins/b108_hardcoded_tmp_directory.html
+   Note: Not applicable to this scan but included for completeness
+
+================================================================================
+SCAN SUMMARY
+================================================================================
+
+Total Issues: 9
+
+Breakdown by Severity:
+  - High: 6 issues
+  - Medium: 2 issues  
+  - Low: 1 issue
+
+Breakdown by Category:
+  - SQL Injection: 2
+  - Hardcoded Secrets: 2
+  - Debug Mode Enabled: 2
+  - File Upload Issues: 1
+  - Information Disclosure: 2
+
+Recommendation: Address all High severity issues immediately. 
+Prioritize SQL injection fixes as these pose the greatest risk.
+
+================================================================================
+END OF SCAN RESULTS
+================================================================================

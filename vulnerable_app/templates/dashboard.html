@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SecureApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>Welcome, {{ username }}!</h1>
+            <div class="header-actions">
+                {% if is_admin %}
+                    <span class="badge admin">Admin</span>
+                {% endif %}
+                <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+            </div>
+        </header>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <main class="dashboard-main">
+            <section class="card">
+                <h2>User Directory</h2>
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+            
+            <section class="card">
+                <h2>File Upload</h2>
+                <p>Upload documents to your account. Max file size: 16MB</p>
+                <form method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <input type="file" name="file" id="file" required>
+                    </div>
+                    <button type="submit" class="btn-upload">Upload File</button>
+                </form>
+            </section>
+            
+            <section class="card">
+                <h2>Search Users</h2>
+                <form method="GET" action="{{ url_for('search') }}">
+                    <div class="form-group">
+                        <input type="text" name="q" placeholder="Search by username..." 
+                               value="{{ search_query if search_query else '' }}">
+                    </div>
+                    <button type="submit" class="btn-search">Search</button>
+                </form>
+                
+                {% if search_results %}
+                    <h3>Search Results</h3>
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in search_results %}
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% endif %}
+                
+                {% if search_query and not search_results %}
+                    <p class="no-results">No users found matching "{{ search_query }}"</p>
+                {% endif %}
+            </section>
+        </main>
+    </div>
+</body>
+</html>

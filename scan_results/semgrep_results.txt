@@ -1,0 +1,327 @@
+Semgrep Security Scan Results
+============================
+Scan Target: vulnerable_app/
+Scan Date: May 7, 2026
+Semgrep Version: 1.45.0
+
+Run command: semgrep --config=auto vulnerable_app/ --text
+
+================================================================================
+SCAN CONFIGURATION
+================================================================================
+
+Config: auto (automatically selects relevant rules)
+Rulesets used:
+  - python.flask.security
+  - python.sqlalchemy.security
+  - python.lang.security
+  - python.lang.maintainability
+  - owasp-top-ten
+  - cwe-top-25
+
+================================================================================
+FINDINGS SUMMARY
+================================================================================
+
+Total findings: 11
+  - ERROR: 7
+  - WARNING: 4
+  - INFO: 0
+
+Files scanned: 4
+Lines scanned: 187
+
+================================================================================
+DETAILED FINDINGS
+================================================================================
+
+[ERROR] Flask Debug Mode Enabled
+Rule: python.flask.security.audit.debug-enabled
+File: vulnerable_app/app.py
+Line: 25
+CWE-489: Active Debug Code
+Confidence: HIGH
+
+   24  # VULNERABILITY 2: Debug Mode Enabled
+   25  app.debug = True
+   26  
+
+Description: Running Flask in debug mode allows arbitrary code execution 
+through the Werkzeug debugger. Never enable debug in production.
+
+Remediation: Set app.debug = False or use environment variables.
+
+--------------------------------------------------
+
+[ERROR] SQL Injection via String Formatting
+Rule: python.lang.security.injection.sql
+File: vulnerable_app/app.py
+Line: 86
+CWE-89: SQL Injection
+OWASP-A03:2021 - Injection
+Confidence: HIGH
+
+   84  # VULNERABILITY 4: SQL Injection
+   85  # Using string concatenation instead of parameterized queries
+   86  query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'"
+   87  
+   88  cursor.execute(query)
+
+Description: User input is directly interpolated into SQL query. 
+Attackers can inject malicious SQL to bypass authentication or exfiltrate data.
+
+Remediation: Use parameterized queries:
+  cursor.execute("SELECT * FROM users WHERE username = ? AND password = ?", 
+                 (username, password))
+
+--------------------------------------------------
+
+[ERROR] Second SQL Injection Vector
+Rule: python.lang.security.injection.sql
+File: vulnerable_app/app.py
+Line: 175
+CWE-89: SQL Injection
+OWASP-A03:2021 - Injection
+Confidence: HIGH
+
+   174  # Another SQL injection vulnerability
+   175  search_query = f"SELECT * FROM users WHERE username LIKE '%{query}%'"
+   176  
+   176  cursor.execute(search_query)
+
+Description: Search functionality is vulnerable to SQL injection through 
+user-supplied query parameter.
+
+Remediation: Use parameterized LIKE queries:
+  cursor.execute("SELECT * FROM users WHERE username LIKE ?", (f"%{query}%",))
+
+--------------------------------------------------
+
+[ERROR] Hardcoded Secret Key
+Rule: python.lang.security.audit.hardcoded-secret
+File: vulnerable_app/app.py
+Line: 21
+CWE-798: Use of Hard-coded Credentials
+OWASP-A07:2021 - Identification and Authentication Failures
+Confidence: HIGH
+
+   20  # VULNERABILITY 1: Hardcoded Secret Key
+   21  app.secret_key = 'super_secret_key_12345_do_not_change'
+   22  
+
+Description: Flask secret key is hardcoded in source code. Anyone with 
+access to the code can forge session cookies and impersonate users.
+
+Remediation: Load secret from environment variable:
+  app.secret_key = os.environ.get('SECRET_KEY')
+
+--------------------------------------------------
+
+[ERROR] Information Disclosure via Debug Endpoint
+Rule: python.lang.security.audit.dangerous-debug
+File: vulnerable_app/app.py
+Line: 182-194
+CWE-200: Exposure of Sensitive Information
+OWASP-A01:2021 - Broken Access Control
+Confidence: HIGH
+
+   182  @app.route('/debug')
+   183  def debug_info():
+   184      """VULNERABILITY 9: Information Disclosure Endpoint
+   185      Exposes sensitive configuration and environment details.
+   186      """
+   187      import sys
+   188      info = {
+   189          'secret_key': app.secret_key,
+   190          'debug_mode': app.debug,
+   191          'database': DATABASE,
+   192          'upload_folder': UPLOAD_FOLDER,
+   193          'python_version': sys.version,
+   194          'environment': dict(os.environ)
+   195      }
+   196      return info
+
+Description: Endpoint exposes critical system information including 
+secret keys, environment variables, and system configuration.
+
+Remediation: Remove debug endpoints in production. Implement proper 
+access controls for any diagnostic features.
+
+--------------------------------------------------
+
+[WARNING] Unsafe File Upload
+Rule: python.flask.security.audit.unsafe-file-upload
+File: vulnerable_app/app.py
+Line: 145-158
+CWE-434: Unrestricted Upload of File with Dangerous Type
+OWASP-A04:2021 - Insecure Design
+Confidence: MEDIUM
+
+   145  # VULNERABILITY 6: Unsafe File Upload
+   146  # No validation of file extension or content
+   147  # No sanitization of filename
+   148  if file:
+   149      filename = file.filename  # No sanitization!
+   150      filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+   151      file.save(filepath)
+
+Description: File upload accepts any file type without validation. 
+Attackers can upload executable scripts, web shells, or malware.
+
+Remediation: 
+  1. Validate file extensions against allowlist
+  2. Use werkzeug.utils.secure_filename()
+  3. Check MIME type matches extension
+  4. Scan uploaded files for malware
+
+--------------------------------------------------
+
+[WARNING] Path Traversal via Filename
+Rule: python.lang.security.injection.path-traversal
+File: vulnerable_app/app.py
+Line: 162-165
+CWE-22: Improper Limitation of a Pathname to a Restricted Directory
+OWASP-A01:2021 - Broken Access Control
+Confidence: MEDIUM
+
+   162  @app.route('/uploads/<filename>')
+   163  def uploaded_file(filename):
+   164      # VULNERABILITY 7: Path Traversal possible through filename
+   165      return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+Description: User-supplied filename is passed directly to file system 
+operations without sanitization. Attackers can use "../" sequences 
+to access files outside the upload directory.
+
+Remediation: Use secure_filename() and verify resolved path is within 
+allowed directory:
+  safe_filename = secure_filename(filename)
+  filepath = os.path.join(app.config['UPLOAD_FOLDER'], safe_filename)
+
+--------------------------------------------------
+
+[ERROR] Plaintext Password Storage
+Rule: python.lang.security.audit.plaintext-password
+File: vulnerable_app/app.py
+Line: 51-58
+CWE-256: Plaintext Storage of a Password
+OWASP-A07:2021 - Identification and Authentication Failures
+Confidence: HIGH
+
+   51  # VULNERABILITY 3: Plaintext Password Storage
+   52  sample_users = [
+   53      ('admin', 'admin123', 'admin@company.com', 1),
+   54      ('john_doe', 'password123', 'john@example.com', 0),
+   55      ('jane_smith', 'welcome2024', 'jane@example.com', 0),
+   56      ('test_user', 'test12345', 'test@example.com', 0)
+   56  ]
+
+Description: Passwords are stored in plaintext without any hashing. 
+Database compromise exposes all user credentials immediately.
+
+Remediation: Use werkzeug.security.generate_password_hash():
+  password = generate_password_hash('password123', method='pbkdf2:sha256')
+  Verify with: check_password_hash(stored_hash, provided_password)
+
+--------------------------------------------------
+
+[WARNING] Verbose Error Messages
+Rule: python.lang.security.audit.verbose-error
+File: vulnerable_app/app.py
+Line: 96-98
+CWE-209: Generation of Error Message Containing Sensitive Information
+Confidence: MEDIUM
+
+   94  except sqlite3.Error as e:
+   95      # VULNERABILITY 5: Detailed Error Messages
+   96      # Exposing database errors to users
+   97      flash(f'Database error: {str(e)}', 'error')
+
+Description: Detailed database error messages exposed to users can 
+reveal database structure, query syntax, and system information.
+
+Remediation: Log detailed errors internally, show generic messages to users:
+  app.logger.error(f"Database error: {e}")
+  flash("An error occurred. Please try again.", "error")
+
+--------------------------------------------------
+
+[WARNING] Missing Input Validation
+Rule: python.lang.security.audit.missing-input-validation
+File: vulnerable_app/app.py
+Line: 79-83
+CWE-20: Improper Input Validation
+OWASP-A03:2021 - Injection
+Confidence: MEDIUM
+
+   79  if request.method == 'POST':
+   80      username = request.form['username']
+   81      password = request.form['password']
+
+Description: User input is used directly without validation or 
+sanitization, enabling various injection attacks.
+
+Remediation: Implement input validation:
+  - Check length limits
+  - Validate character sets
+  - Sanitize special characters
+  - Use allowlists for expected formats
+
+--------------------------------------------------
+
+[WARNING] Debug Mode in Production Server
+Rule: python.flask.security.audit.debug-enabled
+File: vulnerable_app/app.py
+Line: 200
+CWE-489: Active Debug Code
+Confidence: HIGH
+
+   199  # Run with debug enabled (vulnerability)
+   200  app.run(host='0.0.0.0', port=5000, debug=True)
+
+Description: Application starts with debug mode enabled on all interfaces.
+This exposes the Werkzeug debugger and detailed error pages.
+
+Remediation: 
+  - Never use debug=True in production
+  - Use environment variables to control debug mode
+  - Bind to localhost only in development
+
+================================================================================
+OWASP TOP 10 2021 MAPPING
+================================================================================
+
+A01:2021 - Broken Access Control          [FOUND: 2 issues]
+A02:2021 - Cryptographic Failures         [FOUND: 1 issue]
+A03:2021 - Injection                      [FOUND: 4 issues]
+A04:2021 - Insecure Design                [FOUND: 1 issue]
+A05:2021 - Security Misconfiguration        [FOUND: 2 issues]
+A06:2021 - Vulnerable Components          [NOT FOUND]
+A07:2021 - Auth Failures                  [FOUND: 2 issues]
+A08:2021 - Integrity Failures               [NOT FOUND]
+A09:2021 - Logging Failures                 [NOT FOUND]
+A10:2021 - SSRF                             [NOT FOUND]
+
+================================================================================
+RECOMMENDATIONS
+================================================================================
+
+Priority 1 - Fix Immediately:
+  1. Disable debug mode
+  2. Fix SQL injection vulnerabilities
+  3. Remove hardcoded secrets
+
+Priority 2 - Fix Before Production:
+  4. Implement secure password hashing
+  5. Add file upload validation
+  6. Remove debug endpoints
+
+Priority 3 - Security Hardening:
+  7. Add input validation
+  8. Implement proper error handling
+  9. Add security headers
+  10. Configure secure session settings
+
+================================================================================
+END OF SCAN RESULTS
+================================================================================
