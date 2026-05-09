@@ -28,8 +28,8 @@ CodeAlpha_SecureCodingReview/
 │   │   ├── login.html
 │   │   └── dashboard.html
 │   ├── static/           # CSS stylesheets
-│   │   └── style.css
-│   └── uploads/          # File upload directory
+│       └── style.css
+│           
 │
 ├── screenshots/            # Application screenshots
 │   ├── 01_login_page.png
