@@ -18,8 +18,8 @@ CodeAlpha_SecureCodingReview/
 │   │   ├── login.html
 │   │   └── dashboard.html
 │   ├── static/             # CSS stylesheets
-│   │   └── style.css
-│   └── uploads/            # File upload directory
+│       └── style.css
+│   
 │
 ├── fixed_app/              # Secure remediated version
 │   ├── app.py              # Main Flask application (secure)
