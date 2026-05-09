@@ -4,7 +4,7 @@ A comprehensive cybersecurity internship project focusing on secure software dev
 
 ## Project Overview
 
-This project demonstrates a complete secure coding review workflow, from identifying vulnerabilities in a deliberately insecure Flask application to implementing professional remediation measures. The project serves as a practical learning resource for understanding common web application security flaws and their solutions.
+This project demonstrates a complete secure coding review workflow, from identifying vulnerabilities in a deliberately insecure Flask application to implementing professional remediation measures. This project was built to practice identifying and fixing common Flask web application vulnerabilities.
 
 ## Project Structure
 
