@@ -9,7 +9,7 @@ This project demonstrates a complete secure coding review workflow, from identif
 ## Project Structure
 
 ```
-secure-coding-review/
+CodeAlpha_SecureCodingReview/
 │
 ├── vulnerable_app/          # Insecure version with intentional vulnerabilities
 │   ├── app.py              # Main Flask application (vulnerable)
@@ -48,9 +48,9 @@ secure-coding-review/
 ├── reports/               # Professional documentation
 │   └── Secure_Coding_Review_Report.docx
 │
-├── generate_screenshots.py    # Screenshot generation script
-├── generate_report.py         # Report generation script
-└── README.md                  # This file
+├── screenshots.py    # Screenshot generation script
+├── report.py         # Report generation script
+└── README.md                  
 ```
 
 ## Features
